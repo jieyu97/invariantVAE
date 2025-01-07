@@ -46,4 +46,4 @@ https://software.ecmwf.int/wiki/display/TIGGE/Models
 
 |File name| Explanation |
 |-------------|---------------|
-|`ccc.py`| Codes for . |
+|`ccc.py`| Code for . |
