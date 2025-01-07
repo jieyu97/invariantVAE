@@ -21,23 +21,25 @@ from utils.evaluate import evaluation_metric
 
 def main():
 
-    for VAR in ['t2m', 'u10', 'v10']:
+    for N_LATENT in [2, 4, 8, 16, 32]:
+    #for VAR in ['t2m', 'u10', 'v10']:
     #for VAR in ['z500', 't2m', 'u10', 'v10']:
-    
+        VAR = 'z500'
+        
         # model hyper-parameters:
         BATCH_SIZE = 64
         LEARNING_RATE = 1e-4 # 1e-4
         EPOCHS = 300
-        N_LATENT = 32 #2
+        #N_LATENT = 32 #2
         ACT_FUN = 'leakyrelu' # none, relu, leakyrelu, gelu
-        NUM_NODES = 4096
-        reg_w = 0.01
+        NUM_NODES = 4096 #[4096, 2048, 2048]
+        reg_w = 0.001
         wd_w = 0.01
         ed_w = 1
         rmse_w = 0
         best_val_loss = 100
         dim_latent = N_LATENT
-        model_name = 'ivae_simple'
+        model_name = 'ivae_simple_new'
         
         f = open('./drf_'+model_name+'_d'+str(dim_latent)+'_eachens_'+VAR+'.txt','w')
         
@@ -54,11 +56,12 @@ def main():
         train, val, test, scales = build_ivae_dataset(var=VAR)
         print(f"Scales of standardization: {scales}", file=f)
         
-        train_loader = DataLoader(train, batch_size=BATCH_SIZE)
-        val_loader = DataLoader(val, batch_size=BATCH_SIZE)
+        train_loader = DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
+        val_loader = DataLoader(val, batch_size=BATCH_SIZE, shuffle=True)
         test_loader = DataLoader(test, batch_size=BATCH_SIZE)
         
-        model = Ivae(dim_latent=N_LATENT, n_samples=50, reg_weight=reg_w, wd_weight=wd_w, ed_weight=ed_w, rmse_weight=rmse_w, n_nodes1=NUM_NODES, activation=ACT_FUN)
+        #model = Ivae(dim_latent=N_LATENT, n_samples=50, reg_weight=reg_w, wd_weight=wd_w, ed_weight=ed_w, rmse_weight=rmse_w, n_nodes1=4096, activation=ACT_FUN)
+        model = Ivae(dim_latent=N_LATENT, n_samples=50, reg_weight=reg_w, wd_weight=wd_w, ed_weight=ed_w, rmse_weight=rmse_w, n_nodes1=4096, n_nodes2=2048, n_nodes3=2048, activation=ACT_FUN)
         model.to(device)
     
         #optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)

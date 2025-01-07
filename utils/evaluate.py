@@ -59,7 +59,7 @@ def energy(x, y, beta):
 
 def energy_distance_allgrids(y_true, y_pred):
     """
-    Computes Cramer/energy distance of full ensemble fields
+    Computes energy distance of full ensemble fields
 
     Parameters
     ----------
@@ -68,40 +68,16 @@ def energy_distance_allgrids(y_true, y_pred):
 
     Returns
     -------
-    Vector: Cramer/energy distance of full ensemble fields
+    Vector: Energy distance of full ensemble fields
 
     """
     beta = 1
     energy_1 = energy(y_pred, y_true, beta)
     energy_2 = energy(y_true, y_true, beta)
     energy_3 = energy(y_pred, y_pred, beta)
-    ed = energy_1 - (energy_2 + energy_3) / 2.
-    return ed
+    ed = 2 * energy_1 - (energy_2 + energy_3)
+    return np.sqrt(ed)
 
-
-def energy_grid(x, y):
-    return np.mean(np.abs(np.expand_dims(x, 1) - np.expand_dims(y, 2)), axis=(1,2))
-
-
-def energy_distance_eachgrid(y_true, y_pred):
-    """
-    Computes Cramer/energy distance of full ensemble fields
-
-    Parameters
-    ----------
-    y_true : numpy array of shape (366, 50, 81, 81)
-    y_recons : numpy array of shape (366, 50, 81, 81)
-
-    Returns
-    -------
-    Vector: Cramer/energy distance of full ensemble fields
-
-    """
-    energy_1 = energy_grid(y_pred, y_true)
-    energy_2 = energy_grid(y_true, y_true)
-    energy_3 = energy_grid(y_pred, y_pred)
-    ed = energy_1 - (energy_2 + energy_3) / 2.
-    return ed
 
 
 def wasserstein_distance_full_ensemble(y_true, y_pred):
@@ -118,14 +94,6 @@ def wasserstein_distance_full_ensemble(y_true, y_pred):
     Vector: Wasserstein distance of full ensemble fields
 
     """
-#    y_true_flat = np.reshape(y_true, (y_true.shape[0], y_true.shape[1], 81*81))
-#    y_pred_flat = np.reshape(y_pred, (y_pred.shape[0], y_pred.shape[1], 81*81))
-#    y_true_torch = torch.from_numpy(y_true_flat)
-#    y_pred_torch = torch.from_numpy(y_pred_flat)
-#    y_true_torch = y_true_torch.double()
-#    y_pred_torch = y_pred_torch.double()
-#    loss_sinkhorn = geomloss.SamplesLoss("sinkhorn", p=2, blur=0.05, scaling=0.8)
-#    wasserstein_distance = loss_sinkhorn(y_true_torch, y_pred_torch)
     y_true_torch = torch.from_numpy(y_true)
     y_pred_torch = torch.from_numpy(y_pred)
     wasserstein_d = wasserstein(y_true_torch, y_pred_torch)
@@ -158,25 +126,6 @@ def scipy_function_wd_ed(y_true, y_pred):
     
     return wd, ed
     
-
-def evaluation_metric2(y_true, y_pred):
-    """
-    Computes 2 metrics
-
-    Parameters
-    ----------
-    y_true : numpy array of shape (366, 50, 81, 81)
-    y_recons : numpy array of shape (366, 50, 81, 81)
-
-    Returns
-    -------
-    List
-
-    """
-    rmse = rmse_of_mean_ensemble(y_true, y_pred)
-    ed = cramer_full_ensemble_grid(y_true, y_pred)
-    
-    return rmse, ed
     
     
 def evaluation_metric(y_true, y_pred):
@@ -196,17 +145,15 @@ def evaluation_metric(y_true, y_pred):
     mae = rmse_of_mean_ensemble(y_true, y_pred)
     std_true, std_pred = mean_std_ensemble(y_true, y_pred)
     energy_distance_all = energy_distance_allgrids(y_true, y_pred)
-    energy_distance_grid = energy_distance_eachgrid(y_true, y_pred)
     wasserstein_distance = wasserstein_distance_full_ensemble(y_true, y_pred)
     wasserstein_distance = wasserstein_distance.numpy()
     ed_ndim = np.mean(energy_distance_all)
-    ed_1dim = np.mean(energy_distance_grid)
     wd_ndim = np.mean(wasserstein_distance)
     wd_all, ed_all = scipy_function_wd_ed(y_true, y_pred)
     wd_1dim_fun = np.mean(wd_all)
     ed_1dim_fun = np.mean(ed_all)
     
-    return mae, std_true, std_pred, ed_1dim, ed_1dim_fun, ed_ndim, wd_1dim_fun, wd_ndim
+    return mae, std_true, std_pred, ed_1dim_fun, ed_ndim, wd_1dim_fun, wd_ndim
 
 
 def wasserstein(output, target):
@@ -278,50 +225,6 @@ class Sinkhorn(torch.autograd.Function):
         grad_a = -ctx.lambd_sink * grad_a.squeeze(dim=-1)
         grad_b = -ctx.lambd_sink * grad_b.squeeze(dim=-1)
         return grad_p, grad_a, grad_b, None, None, None
-
-
-def IQI(a, b, n=81*81):
-    c1 = 0.01**2
-    c2 = 0.03**2
-    mu_a = torch.mean(a, axis=-1, keepdims=True)
-    mu_b = torch.mean(b, axis=-1, keepdims=True)
-    sigma_a = torch.var(a, axis=-1, keepdims=True)
-    sigma_b = torch.var(b, axis=-1, keepdims=True)
-    a1 = a - mu_a
-    b1 = b - mu_b
-    ab = a1 * b1
-    sigma_ab = torch.sum(ab, axis=-1, keepdims=True) / (n-1)
-    upper = (2 * mu_a * mu_b + c1) * (2 * sigma_ab + c2)
-    lower = (mu_a**2 + mu_b**2 + c1) * (sigma_a + sigma_b + c2)
-    IQI = torch.squeeze(upper / lower)
-    return IQI
-
-
-def wasserstein_iq(output, target):
-
-    y_true = torch.from_numpy(target)
-    y_pred = torch.from_numpy(output)
-    
-    # implicit Sinkhorn
-    y_true_flat = torch.reshape(y_true, (y_true.shape[0], y_true.shape[1], 81*81))
-    y_pred_flat = torch.reshape(y_pred, (y_pred.shape[0], y_pred.shape[1], 81*81))
-    
-    y_true_reshaped = y_true_flat.view(y_true.shape[0], y_true.shape[1], 1, -1)
-    y_pred_reshaped = y_pred_flat.view(y_pred.shape[0], 1, y_pred.shape[1], -1)
-
-    # Compute the pairwise image quality index
-    iqi = IQI(y_true_reshaped, y_pred_reshaped)
-    # cost matrix
-    c = (1-iqi)*10
-
-    a = torch.ones((y_true.shape[0], y_true.shape[1]), dtype=torch.float32) / y_true.shape[1]
-    b = torch.ones((y_pred.shape[0], y_pred.shape[1]), dtype=torch.float32) / y_pred.shape[1]
-    
-    p = Sinkhorn.apply(c, a, b, 100, 1e-3)
-
-    ot_wasserstein = (c*p).sum(dim=(-2,-1))
-    
-    return ot_wasserstein
 
 
 

@@ -59,7 +59,7 @@ def get_ensemble_data_allvar(var='t2m'):
     return data_used
     
     
-def build_ens_allvar_dataset(var='t2m', train_end=2920, test_start=3285):
+def build_ens_allvar_dataset(var='t2m', reorder='F', train_end=2920, test_start=3285):
 
     # read data, weather variable: t2m or 500gh
     weather_variable = var
@@ -73,17 +73,17 @@ def build_ens_allvar_dataset(var='t2m', train_end=2920, test_start=3285):
     x_train = data_gridded[:train_end, :, :, :]
     scales = compute_normalization(x_train)
     x_train_normalized = apply_normalization(x_train, scales)
-    x_train_norm_ens = x_train_normalized.reshape((x_train.shape[0]*50, 1, 81, 81), order='F')
+    x_train_norm_ens = x_train_normalized.reshape((x_train.shape[0]*50, 1, 81, 81), order=reorder)
     
     # validation data
     x_val = data_gridded[train_end:test_start, :, :, :]
     x_val_normalized = apply_normalization(x_val, scales)
-    x_val_norm_ens = x_val_normalized.reshape((x_val.shape[0]*50, 1, 81, 81), order='F')
+    x_val_norm_ens = x_val_normalized.reshape((x_val.shape[0]*50, 1, 81, 81), order=reorder)
     
     # test data
     x_test = data_gridded[test_start:, :, :, :]
     x_test_normalized = apply_normalization(x_test, scales)
-    x_test_norm_ens = x_test_normalized.reshape((x_test.shape[0]*50, 1, 81, 81), order='F')
+    x_test_norm_ens = x_test_normalized.reshape((x_test.shape[0]*50, 1, 81, 81), order=reorder)
     
     # model inputs:
     train_data = torch.from_numpy(x_train_norm_ens)

@@ -15,6 +15,8 @@ class Ivae(nn.Module):
                  ed_weight = 0.1,
                  rmse_weight = 1,
                  n_nodes1: int = 4096,
+                 n_nodes2: int = 2048,
+                 n_nodes3: int = 1024,
                  activation = 'gelu'):
         super(Ivae, self).__init__()
         
@@ -25,17 +27,17 @@ class Ivae(nn.Module):
         self.ed_weight = ed_weight
         self.rmse_weight = rmse_weight
         
-        n_nodes2 = n_nodes1
-        
         # input (bs, 50, 81, 81)
         self.flat = nn.Flatten(start_dim=2, end_dim=-1)
         self.unflat = nn.Unflatten(2, (81, 81))
         
         self.e_linear1 = nn.Linear(81*81, n_nodes1)
-        self.e_linear2_1 = nn.Linear(n_nodes2, dim_latent)
-        self.e_linear2_2 = nn.Linear(n_nodes2, dim_latent)
+        self.e_linear2 = nn.Linear(n_nodes1, n_nodes2)
+        self.e_linear3 = nn.Linear(n_nodes1, n_nodes1)
+        self.e_linear4_1 = nn.Linear(n_nodes1, dim_latent)
+        self.e_linear4_2 = nn.Linear(n_nodes1, dim_latent)
         
-        self.d_linear1 = nn.Linear(dim_latent, n_nodes2)
+        self.d_linear1 = nn.Linear(dim_latent, n_nodes1)
         self.d_linear2 = nn.Linear(n_nodes1, 81*81)
         
         if activation == 'none':
@@ -71,14 +73,14 @@ class Ivae(nn.Module):
         x = self.flat(x)
         # (, 50, 81*81)
         x = self.e_linear1(x)
-        x = self.act(x)
-        # (, 50, 4096)
+        #x = self.act(x)
+        #x = self.e_linear2(x)
         x_pool = self.avgpool(x)
-        # (, 1, 4096)
         x_pool = torch.squeeze(x_pool, 1)
-        # (, 4096)
-        mu = self.e_linear2_1(x_pool)
-        sigma = self.e_linear2_2(x_pool)
+        x = self.e_linear3(x_pool)
+        x = self.act(x)
+        mu = self.e_linear4_1(x)
+        sigma = self.e_linear4_2(x)
         # (, 1, 32)
         return mu, sigma
 
@@ -95,7 +97,7 @@ class Ivae(nn.Module):
         return y
         
     def forward(self, input: Tensor, **kwargs):
-        # input & recons shape: (bs, 1, 50, 81, 81) (bs, 50, 81, 81)
+        # input & recons shape: (bs, 50, 81, 81) (bs, 50, 81, 81)
         x = input
         #bs = x.shape[0]
         z_mean, z_log_var = self.encoder(x)
