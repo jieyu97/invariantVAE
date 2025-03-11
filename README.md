@@ -35,15 +35,16 @@ https://software.ecmwf.int/wiki/display/TIGGE/Models
 
 ## Explanation of the code files
 
-- For reproducing the reconstructed forecast fields presented in the main paper (*please download the two datasets above from figshare first*):
+- For reproducing the reconstructed forecast fields presented in the main paper (*please download the datasets above from figshare first*):
 
 |File name| Explanation |
 |-------------|---------------|
-|**`aaa.py`**| Python script to implement . |
-|**`bbb.py`**| Python script to implement . |
+|**`drf_pca_eachens.py`**| Python script to implement PCA-based approach. |
+|**`drf_ae_simple_eachens.py`**| Python script to implement AE-based approach. |
+|**`drf_ivae_simple_eachens.py`**| Python script to implement invariant VAE approach. |
 
 - Others:
 
 |File name| Explanation |
 |-------------|---------------|
-|`ccc.py`| Code for . |
+|`hptune_ae_simple.py`| Code for hyperparameter tuning of the AE neural network model. |
