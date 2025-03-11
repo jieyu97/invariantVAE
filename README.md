@@ -39,9 +39,9 @@ https://software.ecmwf.int/wiki/display/TIGGE/Models
 
 |File name| Explanation |
 |-------------|---------------|
-|**`drf_pca_eachens.py`**| Python script to implement PCA-based approach. |
-|**`drf_ae_simple_eachens.py`**| Python script to implement AE-based approach. |
-|**`drf_ivae_simple_eachens.py`**| Python script to implement invariant VAE approach. |
+|**`drf_pca_eachens.py`**| Python script to implement the PCA-based approach. |
+|**`drf_ae_simple_eachens.py`**| Python script to implement the AE-based approach. |
+|**`drf_ivae_simple_eachens.py`**| Python script to implement the invariant VAE approach. |
 
 - Others:
 
