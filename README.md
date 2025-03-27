@@ -2,7 +2,7 @@
 
 This repository provides python codes for the dimensionality reduction approaches to compressing ensemble forecast fields accompanying the paper
 
-> Chen, J., Janke, T., Steinke, F. and Lerch, S., 2025. Learning low-dimensional representations of ensemble forecast fields using autoencoder-based methods. *arXiv preprint arXiv:2502.04409*.
+> Chen, J., Janke, T., Steinke, F. and Lerch, S., 2025. Learning low-dimensional representations of ensemble forecast fields using autoencoder-based methods. *arXiv preprint arXiv:2502.04409*. https://arxiv.org/abs/2502.04409
 
 ## Data
 
